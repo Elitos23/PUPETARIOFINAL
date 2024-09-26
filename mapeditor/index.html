@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Map Editor</title>
+    <style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    -webkit-user-select: none; /* Отключение выделения текста */
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#controls {
+    margin-bottom: 20px;
+}
+
+button {
+    margin-right: 5px;
+    padding: 10px;
+}
+
+#map {
+    display: grid;
+    grid-template-columns: repeat(180, 20px);
+    grid-template-rows: repeat(10, 20px);
+    gap: 1px;
+}
+
+.cell {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #ddd;
+    text-align: center;
+    line-height: 20px;
+}
+
+.cell img {
+    width: 100%;
+    height: 100%;
+}
+
+.block img {
+    content: url('https://i.imgur.com/uzvFujU.png'); /* Заглушка для блока */
+}
+
+.mushroom img {
+    content: url('https://i.imgur.com/0wMd92p.png'); /* Заглушка для гриба */
+}
+
+.spikes img {
+    content: url('https://i.imgur.com/esrhU1m.png'); /* Заглушка для шипов */
+}
+
+.enemy img {
+    content: url('https://i.imgur.com/KPO3fR9.png'); /* Заглушка для врага */
+}
+
+
+    </style>
+</head>
+<body>
+    <h1>Game Map Editor</h1>
+    <div id="controls">
+        <button onclick="selectObject('block')">Block</button>
+        <button onclick="selectObject('mushroom')">Mushroom</button>
+        <button onclick="selectObject('spikes')">Spikes</button>
+        <button onclick="selectObject('enemy')">Enemy</button>
+        <button onclick="selectObject('clear')">Clear</button>
+        <button onclick="finishMap()">Finish</button>
+    </div>
+    <div id="map"></div>
+
+    <script>
+let selectedObject = null;
+let isMouseDown = false;
+
+function selectObject(object) {
+    selectedObject = object;
+}
+
+function createCell(row, col) {
+    const cell = document.createElement('div');
+    cell.classList.add('cell');
+
+    // Заполнение последних двух рядов блоками
+    if (row >= 8) {
+        cell.classList.add('block');
+        const img = document.createElement('img');
+        cell.appendChild(img);
+    }
+
+    cell.addEventListener('mousedown', (event) => {
+        event.preventDefault();  // Предотвращение выделения текста
+        isMouseDown = true;
+        fillCell(cell);
+    });
+
+
+
+    cell.addEventListener('mouseup', () => {
+        isMouseDown = false;
+    });
+
+    cell.addEventListener('mouseleave', () => {
+        if (isMouseDown) {
+            fillCell(cell);
+        }
+    });
+
+    return cell;
+}
+
+function fillCell(cell) {
+    if (selectedObject) {
+        cell.className = 'cell';  // Сброс всех классов
+        cell.innerHTML = '';  // Удаление предыдущего изображения
+
+        if (selectedObject !== 'clear') {
+            const img = document.createElement('img');
+            cell.classList.add(selectedObject);
+            cell.appendChild(img);
+        }
+    }
+}
+
+function createMap() {
+    const map = document.getElementById('map');
+    map.innerHTML = '';  // Очистить карту перед созданием
+    for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 180; col++) {
+            const cell = createCell(row, col);
+            map.appendChild(cell);
+        }
+    }
+}
+
+function finishMap() {
+    let mapText = '';
+    const cells = document.querySelectorAll('.cell');
+
+    cells.forEach((cell, index) => {
+        if (index % 180 === 0) {
+            if (index !== 0) {
+                mapText += '",\n';  // Закрыть предыдущую строку и добавить запятую
+            }
+            mapText += '"';  // Начать новую строку с кавычки
+        }
+
+        if (cell.classList.contains('block')) {
+            mapText += '=';
+        } else if (cell.classList.contains('mushroom')) {
+            mapText += '#';
+        } else if (cell.classList.contains('spikes')) {
+            mapText += '^';
+        } else if (cell.classList.contains('enemy')) {
+            mapText += '>';
+        } else {
+            mapText += ' ';
+        }
+    });
+
+    mapText += '"';  // Закрыть последнюю строку
+
+    downloadMap(mapText);
+}
+
+function downloadMap(mapText) {
+    const blob = new Blob([mapText], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'map.txt';
+    link.click();
+}
+
+// Сброс состояния при отпускании кнопки мыши
+document.addEventListener('mouseup', () => {
+    isMouseDown = false;
+});
+
+createMap();
+
+    </script>
+</body>
+</html>
